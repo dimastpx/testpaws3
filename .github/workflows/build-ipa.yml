@@ -1,0 +1,46 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - name: Checkout (с LFS)
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Xcode и схемы проекта
+        run: |
+          xcodebuild -version
+          xcodebuild -list -project FiveNightsAtPaws.xcodeproj
+
+      - name: Сборка (без подписи)
+        run: |
+          xcodebuild archive \
+            -project FiveNightsAtPaws.xcodeproj \
+            -scheme FiveNightsAtPaws \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/app.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM=""
+
+      - name: Упаковка в IPA
+        run: |
+          mkdir -p Payload
+          cp -R "$RUNNER_TEMP"/app.xcarchive/Products/Applications/*.app Payload/
+          zip -qry FiveNightsAtPaws.ipa Payload
+
+      - name: Загрузка артефакта
+        uses: actions/upload-artifact@v4
+        with:
+          name: FiveNightsAtPaws-ipa
+          path: FiveNightsAtPaws.ipa
