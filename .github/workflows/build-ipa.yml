@@ -7,16 +7,20 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - name: Checkout (с LFS)
         uses: actions/checkout@v4
         with:
           lfs: true
 
-      - name: Xcode и схемы проекта
+      - name: Выбор Xcode 26
         run: |
+          if [ -d /Applications/Xcode_26.6.app ]; then
+            sudo xcode-select -s /Applications/Xcode_26.6.app
+          fi
           xcodebuild -version
+          xcodebuild -showsdks | grep -i iphoneos
           xcodebuild -list -project FiveNightsAtPaws.xcodeproj
 
       - name: Сборка (без подписи)
